@@ -1,0 +1,23 @@
+import bcrypt from "bcrypt";
+import { env } from "../../../config/env";
+import { prisma } from "../../lib/prisma";
+import { AppError } from "../../error/AppError";
+import httpStatus from "http-status-codes";
+
+const createUser = async (payload: any) => {
+  const isExsist = await prisma.user.findUnique({
+    where: { email: payload.email },
+  });
+  if (isExsist) {
+    throw new AppError("User already exists", httpStatus.CONFLICT);
+  }
+  const hashedPass = await bcrypt.hash(payload.password, env.pass_salt);
+  payload.password = hashedPass;
+  const user = await prisma.user.create({
+    data: payload,
+    select: { id: true, email: true, name: true, role: true },
+  });
+  return user;
+};
+
+export const userService = { createUser };
