@@ -19,7 +19,8 @@
     "express": "^5.2.1",
     "http-status-codes": "^2.3.0",
     "mongodb": "^7.1.0",
-    "ts-node-dev": "^2.0.0"
+    "ts-node-dev": "^2.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
