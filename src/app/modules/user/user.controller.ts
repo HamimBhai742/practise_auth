@@ -17,4 +17,27 @@ const createUser = catchAsync(
   },
 );
 
-export const userController = { createUser };
+const getProfile = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const user = await userService.getProfile(req.user.id);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User profile fetched successfully",
+      data: user,
+    });
+  },
+);
+
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const user = await userService.forgotPassword(req.body.email);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Password reset link sent successfully",
+    data: null,
+  });
+});
+
+export const userController = { createUser, getProfile ,forgotPassword};

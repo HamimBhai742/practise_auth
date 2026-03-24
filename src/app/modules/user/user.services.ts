@@ -3,6 +3,7 @@ import { env } from "../../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../error/AppError";
 import httpStatus from "http-status-codes";
+import { forgotPasswordEmail } from "../../utils/email/forgetPass";
 
 const createUser = async (payload: any) => {
   const isExsist = await prisma.user.findUnique({
@@ -20,4 +21,22 @@ const createUser = async (payload: any) => {
   return user;
 };
 
-export const userService = { createUser };
+const getProfile = async (id: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, email: true, name: true, role: true },
+  });
+  return user;
+};
+
+const forgotPassword = async (email: string) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+  const resetLink = `http://localhost:3000/reset-password/${user.id}`;
+  await forgotPasswordEmail({ name: user.name, email, resetLink });
+  return user;
+};
+
+export const userService = { createUser, getProfile, forgotPassword };

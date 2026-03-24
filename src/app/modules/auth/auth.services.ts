@@ -2,6 +2,8 @@ import { AppError } from "../../error/AppError";
 import { prisma } from "../../lib/prisma";
 import bcrypt from "bcrypt";
 import httpStatus from "http-status-codes";
+import { generateToken } from "../../utils/generateToken";
+import { loginSuccessEmail } from "../../utils/email/loginSuccess";
 
 const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
@@ -12,8 +14,17 @@ const login = async (email: string, password: string) => {
   if (!isPasswordMatch) {
     throw new AppError("Incorrect password", httpStatus.UNAUTHORIZED);
   }
-  return user;
+  const token = await generateToken(user);
+  await loginSuccessEmail({
+    name: user.name,
+    email: user.email,
+    date: new Date().toDateString(),
+    time: new Date().toLocaleTimeString(),
+    device: "Chrome",
+  });
+  return {
+    accessToken: token,
+  };
 };
-
 
 export const authService = { login };
