@@ -7,4 +7,6 @@ const router = Router();
 
 router.post("/login", validateRequest(authZodSchema), authController.login);
 
+router.post("/reset-password/:token", authController.resetPassword);
+
 export const authRoutes = router;

@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma";
 import { AppError } from "../../error/AppError";
 import httpStatus from "http-status-codes";
 import { forgotPasswordEmail } from "../../utils/email/forgetPass";
+import { createToken } from "../../utils/token";
 
 const createUser = async (payload: any) => {
   const isExsist = await prisma.user.findUnique({
@@ -34,9 +35,13 @@ const forgotPassword = async (email: string) => {
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
-  const resetLink = `http://localhost:3000/reset-password/${user.id}`;
+  const resetLink = `http://localhost:3000/reset-password/${forgotPassword}`;
   await forgotPasswordEmail({ name: user.name, email, resetLink });
-  return user;
+
+  const token = await createToken(user, env.jwt_secret, "10m");
+  return {
+    forgotPasswordToken: token,
+  };
 };
 
 export const userService = { createUser, getProfile, forgotPassword };
