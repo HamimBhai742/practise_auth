@@ -42,6 +42,10 @@ const resendOtp = async (email: string) => {
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
+
+  if(!user.isVerified) {
+    throw new AppError("User is not verified", httpStatus.UNAUTHORIZED);
+  }
   const otp = generateOtp(6);
   const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
   await prisma.user.update({
@@ -78,8 +82,10 @@ const verifyOtp = async (email: string, otp: string, data: any) => {
   await loginSuccessEmail({
     name: user.name,
     email: user.email,
-    date: new Date().toLocaleDateString(),
-    time: new Date().toLocaleTimeString(),
+    time: data.time,
+    device: data.device,
+    ip: data.ip,
+    location: data.location,
   });
   return {
     accessToken: token,

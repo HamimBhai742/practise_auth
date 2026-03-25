@@ -3,10 +3,11 @@ import { sendEmail } from "./nodemailer";
 
 interface LoginEmailData {
   name: string;
-  date: string;
   time: string;
   email: string;
   device?: string;
+  ip: string;
+  location: string;
 }
 
 export const loginSuccessEmail = async (data: LoginEmailData) => {
@@ -18,8 +19,9 @@ export const loginSuccessEmail = async (data: LoginEmailData) => {
 
         <p><strong>Login Details:</strong></p>
         <ul>
-          <li><b>Date:</b> ${data.date}</li>
-          <li><b>Time:</b> ${data.time}</li>
+          <li><b>IP Address:</b> ${data.ip}</li>
+          <li><b>Date & Time:</b> ${data.time}</li>
+          <li><b>Location:</b> ${data.location}</li>
           ${data.device ? `<li><b>Device/Browser:</b> ${data.device}</li>` : ""}
         </ul>
 
