@@ -12,14 +12,6 @@ const routes = [
   {
     path: "/auth",
     route: authRoutes,
-  },
-  {
-    path: "/test",
-    route: testRoutes,
-  },
-  {
-    path: "/",
-    route: testRoutes,
   }
 ];
 
