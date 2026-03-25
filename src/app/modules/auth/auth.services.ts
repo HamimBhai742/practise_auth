@@ -94,7 +94,7 @@ const verifyOtp = async (email: string, otp: string, data: any) => {
 
 const resetPassword = async (token: string, newPass: string) => {
   const decodedToken = verifyToken(token, env.jwt_secret);
-  console.log(decodedTok
+  console.log(decodedTo
 
   );
   const user = await prisma.user.findUnique({ where: { id: decodedToken.id } });
