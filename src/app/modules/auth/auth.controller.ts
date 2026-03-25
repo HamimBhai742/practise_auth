@@ -3,6 +3,8 @@ import { catchAsync } from "../../utils/catchAsync";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
+import { UAParser } from "ua-parser-js";
+import { getClientInfo } from "../../utils/getInfo";
 
 const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -28,8 +30,8 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-
-  const user = await authService.verifyOtp(req.body.email, req.body.otp);
+  const data=await getClientInfo(req);
+  const user = await authService.verifyOtp(req.body.email, req.body.otp,data);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

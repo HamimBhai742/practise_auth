@@ -35,8 +35,6 @@ const login = async (email: string, password: string) => {
     user.email,
     otp,
   );
-
-  ;
 };
 
 const resendOtp = async (email: string) => {
@@ -59,7 +57,7 @@ const resendOtp = async (email: string) => {
   return null;
 };
 
-const verifyOtp = async (email: string, otp: string) => {
+const verifyOtp = async (email: string, otp: string, data: any) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);

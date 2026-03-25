@@ -4,6 +4,7 @@ import { userService } from "./user.services";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
 import { UAParser } from "ua-parser-js";
+import { getClientInfo } from "../../utils/getInfo";
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -91,16 +92,8 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const parser = new UAParser(req.headers["user-agent"]);
-  console.log(parser);
-  const result = await parser.getResult();
-  console.log(result);
-  const browser = result.browser.name; // Chrome
-  const ip = result.browser.version
-  const os = result.os.name; // Windows
-
-  const deviceInfo = `${browser} on ${os}`;
-  console.log(deviceInfo, ip);
+  const data = await getClientInfo(req);
+  console.log(data)
   const users = await userService.getAllUsers();
   sendResponse(res, {
     success: true,
