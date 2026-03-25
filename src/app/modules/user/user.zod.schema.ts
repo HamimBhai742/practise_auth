@@ -8,3 +8,12 @@ export const userZodSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters" }),
   role: z.enum(["user", "admin"]).optional(),
 });
+
+export const userOtpZodSchema = z.object({
+  otp: z
+    .string({ message: "OTP is required" })
+    .length(6, { message: "OTP must be 6 digits" }),
+  email: z.string({ message: "Email is required" }),
+});
+
+export const resendOtpZodSchema = z.object({ email: z.string({ message: "Email is required" }) });

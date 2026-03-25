@@ -17,6 +17,26 @@ const createUser = catchAsync(
   },
 );
 
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
+  const user = await userService.resendOtp(req.body.email);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "OTP sent successfully",
+    data: user,
+  });
+});
+
+const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  const user = await userService.verifyOtp(req.body.email, req.body.otp);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User verified successfully",
+    data: user,
+  });
+});
+
 const getProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const user = await userService.getProfile(req.user.id);
@@ -40,4 +60,10 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const userController = { createUser, getProfile ,forgotPassword};
+export const userController = {
+  createUser,
+  getProfile,
+  forgotPassword,
+  verifyOtp,
+  resendOtp,
+};

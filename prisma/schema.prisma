@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(user)
-  status   Status @default(active)
-
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String   @unique
+  password   String
+  role       Role     @default(user)
+  status     Status   @default(active)
+  isVerified Boolean  @default(false)
+  otp        String?
+  otpExpiry  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
