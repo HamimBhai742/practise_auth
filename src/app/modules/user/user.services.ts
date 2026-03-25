@@ -121,7 +121,11 @@ const forgotPassword = async (email: string) => {
 
   const otp = generateOtp(6);
   const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
-  const forgetPasswordToken = await createToken({ id: user.id, email, name: user.name, role: user.role }, env.jwt_secret, "2m");
+  const forgetPasswordToken = await createToken(
+    { id: user.id, email, name: user.name, role: user.role },
+    env.jwt_secret,
+    "2m",
+  );
   const forgetPasswordTokenExpires = new Date(Date.now() + 2 * 60 * 1000);
 
   await prisma.user.update({
@@ -192,6 +196,11 @@ const resetPassword = async (token: string, newPass: string) => {
   return null;
 };
 
+const getAllUsers = async () => {
+  const users = await prisma.user.findMany();
+  return users;
+};
+
 export const userService = {
   createUser,
   getProfile,
@@ -200,4 +209,5 @@ export const userService = {
   resendOtp,
   verifyForgotPasswordOtp,
   resetPassword,
+  getAllUsers,
 };

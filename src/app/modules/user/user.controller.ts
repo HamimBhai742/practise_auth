@@ -3,6 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { userService } from "./user.services";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
+import { UAParser } from "ua-parser-js";
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -89,6 +90,26 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const parser = new UAParser(req.headers["user-agent"]);
+  console.log(parser);
+  const result = await parser.getResult();
+  console.log(result);
+  const browser = result.browser.name; // Chrome
+  const ip = result.browser.version
+  const os = result.os.name; // Windows
+
+  const deviceInfo = `${browser} on ${os}`;
+  console.log(deviceInfo, ip);
+  const users = await userService.getAllUsers();
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Users fetched successfully",
+    data: users,
+  });
+});
+
 export const userController = {
   createUser,
   getProfile,
@@ -97,4 +118,5 @@ export const userController = {
   resendOtp,
   verifyForgotPasswordOtp,
   resetPassword,
+  getAllUsers,
 };

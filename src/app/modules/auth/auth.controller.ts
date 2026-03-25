@@ -28,6 +28,7 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+
   const user = await authService.verifyOtp(req.body.email, req.body.otp);
   sendResponse(res, {
     success: true,
