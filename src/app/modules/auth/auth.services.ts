@@ -6,7 +6,6 @@ import { generateToken } from "../../utils/generateToken";
 import { loginSuccessEmail } from "../../utils/email/loginSuccess";
 import { verifyToken } from "../../utils/verifyToken";
 import { env } from "../../../config/env";
-import { UserArgs } from "@prisma/client/runtime/library";
 
 const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
@@ -30,9 +29,18 @@ const login = async (email: string, password: string) => {
   };
 };
 
-const resetPassword = async (token: string) => {
+const resetPassword = async (token: string, newPass: string) => {
   const decodedToken = verifyToken(token, env.jwt_secret);
   console.log(decodedToken);
+  const user = await prisma.user.findUnique({ where: { id: decodedToken.id } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+  const hashedPass = await bcrypt.hash(newPass, env.pass_salt);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPass },
+  });
 };
 
 export const authService = { login, resetPassword };
