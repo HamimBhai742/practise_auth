@@ -60,10 +60,41 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyForgotPasswordOtp = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = await userService.verifyForgotPasswordOtp(
+      req.body.email,
+      req.body.otp,
+      req.body.token,
+    );
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "OTP verified successfully",
+      data: user,
+    });
+  },
+);
+
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const user = await userService.resetPassword(
+    req.body.token,
+    req.body.password,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Password reset successfully",
+    data: user,
+  });
+});
+
 export const userController = {
   createUser,
   getProfile,
   forgotPassword,
   verifyOtp,
   resendOtp,
+  verifyForgotPasswordOtp,
+  resetPassword,
 };

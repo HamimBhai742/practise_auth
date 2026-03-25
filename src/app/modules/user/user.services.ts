@@ -3,10 +3,12 @@ import { env } from "../../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../error/AppError";
 import httpStatus from "http-status-codes";
-import { forgotPasswordEmail } from "../../utils/email/forgetPass";
-import { createToken } from "../../utils/token";
 import { generateOtp } from "../../utils/generateOtp";
 import { registrationOtpTemplate } from "../../utils/email/registrationOtpTemplate";
+import { forgetPasswordOtpTemplate } from "../../utils/email/forgetPasswordOtpTemplate";
+import { createToken } from "../../utils/token";
+import { verifyToken } from "../../utils/verifyToken";
+import { resetPasswordSuccessTemplate } from "../../utils/email/resetOtpSuccess";
 
 interface UserPayload {
   name: string;
@@ -116,13 +118,69 @@ const forgotPassword = async (email: string) => {
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
-  const resetLink = `http://localhost:3000/reset-password/${forgotPassword}`;
-  await forgotPasswordEmail({ name: user.name, email, resetLink });
 
-  const token = await createToken(user, env.jwt_secret, "10m");
+  const otp = generateOtp(6);
+  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+  const forgetPasswordToken = await createToken(user, env.jwt_secret, "2m");
+  const forgetPasswordTokenExpires = new Date(Date.now() + 2 * 60 * 1000);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { otp, otpExpiry, forgetPasswordToken, forgetPasswordTokenExpires },
+  });
+  await forgetPasswordOtpTemplate(
+    user.name,
+    "Reset Password Verification Code",
+    user.email,
+    otp,
+  );
+  return user;
+};
+
+const verifyForgotPasswordOtp = async (
+  email: string,
+  otp: string,
+  token: string,
+) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+  if (user.forgetPasswordToken !== token) {
+    throw new AppError("Invalid token", httpStatus.BAD_REQUEST);
+  }
+  if (user.otp !== otp) {
+    throw new AppError("Invalid OTP", httpStatus.BAD_REQUEST);
+  }
+  if (user?.otpExpiry && user.otpExpiry < new Date()) {
+    throw new AppError("OTP expired", httpStatus.BAD_REQUEST);
+  }
+
+  const temToken = await createToken(user, env.jwt_secret, "2m");
+  const forgetPasswordTokenExpires = new Date(Date.now() + 2 * 60 * 1000);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { forgetPasswordToken: temToken, forgetPasswordTokenExpires },
+  });
+
   return {
-    forgotPasswordToken: token,
+    accessToken: temToken,
   };
+};
+
+const resetPassword = async (token: string, newPass: string) => {
+  const decodedToken = verifyToken(token, env.jwt_secret);
+  const user = await prisma.user.findUnique({ where: { id: decodedToken.id } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+
+  const hashedPass = await bcrypt.hash(newPass, env.pass_salt);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPass },
+  });
+  await resetPasswordSuccessTemplate(user.name, user.email);
+  return null
 };
 
 export const userService = {
@@ -131,4 +189,6 @@ export const userService = {
   forgotPassword,
   verifyOtp,
   resendOtp,
+  verifyForgotPasswordOtp,
+  resetPassword,
 };
