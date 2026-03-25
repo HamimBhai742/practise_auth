@@ -6,23 +6,82 @@ import { generateToken } from "../../utils/generateToken";
 import { loginSuccessEmail } from "../../utils/email/loginSuccess";
 import { verifyToken } from "../../utils/verifyToken";
 import { env } from "../../../config/env";
+import { twoFactorOtpTemplate } from "../../utils/email/twoFactorOtpTemplate";
+import { generateOtp } from "../../utils/generateOtp";
 
 const login = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
+
+  if (!user.isVerified) {
+    throw new AppError("User is not verified", httpStatus.UNAUTHORIZED);
+  }
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
     throw new AppError("Incorrect password", httpStatus.UNAUTHORIZED);
   }
+
+  const otp = generateOtp(6);
+  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { otp, otpExpiry },
+  });
+  await twoFactorOtpTemplate(
+    user.name,
+    "Login Verification Code",
+    user.email,
+    otp,
+  );
+
+  ;
+};
+
+const resendOtp = async (email: string) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+  const otp = generateOtp(6);
+  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { otp, otpExpiry },
+  });
+  await twoFactorOtpTemplate(
+    user.name,
+    "Login Verification Code",
+    user.email,
+    otp,
+  );
+  return null;
+};
+
+const verifyOtp = async (email: string, otp: string) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+  if (user.otp !== otp) {
+    throw new AppError("Invalid OTP", httpStatus.BAD_REQUEST);
+  }
+  if (user?.otpExpiry && user.otpExpiry < new Date()) {
+    throw new AppError("OTP expired", httpStatus.BAD_REQUEST);
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { otp: null, otpExpiry: null },
+  });
+
   const token = await generateToken(user);
+
   await loginSuccessEmail({
     name: user.name,
     email: user.email,
-    date: new Date().toDateString(),
+    date: new Date().toLocaleDateString(),
     time: new Date().toLocaleTimeString(),
-    device: "Chrome",
   });
   return {
     accessToken: token,
@@ -43,4 +102,4 @@ const resetPassword = async (token: string, newPass: string) => {
   });
 };
 
-export const authService = { login, resetPassword };
+export const authService = { login, resetPassword, verifyOtp, resendOtp };

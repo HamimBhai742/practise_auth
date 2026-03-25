@@ -6,16 +6,36 @@ import httpStatus from "http-status-codes";
 
 const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = await authService.login(req.body.email, req.body.password);
+    await authService.login(req.body.email, req.body.password);
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
-      message: "User logged in successfully",
-      data: user,
+      message: "Login otp sent successfully",
+      data: null,
     });
   },
 );
+
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
+  const user = await authService.resendOtp(req.body.email);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "OTP sent successfully",
+    data: user,
+  });
+});
+
+export const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  const user = await authService.verifyOtp(req.body.email, req.body.otp);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User logged in successfully",
+    data: user,
+  });
+});
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const user = await authService.resetPassword(
@@ -31,4 +51,4 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const authController = { login, resetPassword };
+export const authController = { login, resetPassword, verifyOtp, resendOtp };

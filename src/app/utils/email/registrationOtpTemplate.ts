@@ -135,7 +135,7 @@ export const registrationOtpTemplate = async (userName: string, subject: string,
             </div>
 
             <p class="warning-text">
-              This code will expire in a few minutes.  
+              This code will expire in 2 minutes.  
               If you didn’t create this account, you can safely ignore this email.
             </p>
           </div>
@@ -152,8 +152,6 @@ export const registrationOtpTemplate = async (userName: string, subject: string,
 </body>
 </html>
 `;
-    //   await sendEmail(email, subject, html);
     await sendEmail(email, subject, html)
-
 }
 
