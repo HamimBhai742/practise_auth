@@ -121,19 +121,24 @@ const forgotPassword = async (email: string) => {
 
   const otp = generateOtp(6);
   const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
-  const forgetPasswordToken = await createToken(user, env.jwt_secret, "2m");
+  const forgetPasswordToken = await createToken({ id: user.id, email, name: user.name, role: user.role }, env.jwt_secret, "2m");
   const forgetPasswordTokenExpires = new Date(Date.now() + 2 * 60 * 1000);
+
   await prisma.user.update({
     where: { id: user.id },
     data: { otp, otpExpiry, forgetPasswordToken, forgetPasswordTokenExpires },
   });
+
   await forgetPasswordOtpTemplate(
     user.name,
     "Reset Password Verification Code",
     user.email,
     otp,
   );
-  return user;
+  return {
+    forgetPasswordToken,
+    forgetPasswordTokenExpires,
+  };
 };
 
 const verifyForgotPasswordOtp = async (
@@ -155,7 +160,11 @@ const verifyForgotPasswordOtp = async (
     throw new AppError("OTP expired", httpStatus.BAD_REQUEST);
   }
 
-  const temToken = await createToken(user, env.jwt_secret, "2m");
+  const temToken = await createToken(
+    { id: user.id, email, name: user.name, role: user.role },
+    env.jwt_secret,
+    "2m",
+  );
   const forgetPasswordTokenExpires = new Date(Date.now() + 2 * 60 * 1000);
   await prisma.user.update({
     where: { id: user.id },
@@ -180,7 +189,7 @@ const resetPassword = async (token: string, newPass: string) => {
     data: { password: hashedPass },
   });
   await resetPasswordSuccessTemplate(user.name, user.email);
-  return null
+  return null;
 };
 
 export const userService = {
